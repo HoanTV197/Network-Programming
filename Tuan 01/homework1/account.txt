@@ -1,4 +1,0 @@
-hoantv 1
-khanhmv 0
-hungnd 1
-dangmv 0
