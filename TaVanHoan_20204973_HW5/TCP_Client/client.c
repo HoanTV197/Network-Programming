@@ -1,66 +1,60 @@
 
-// Client code
+
 #include <stdio.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 
 #define MAX_USERNAME_LEN 50
-#define MAX_LOG_LEN 500
 
-int isLoggedIn = 0;
+typedef struct {
+    char username[MAX_USERNAME_LEN];
+    int status;
+} Account;
 
-void handleLogin(int sockfd, char* username) {
+int checkLogin = 0;
+
+/**
+* @function Login: This function logs in a user with a given username.
+* @param sockfd: The socket file descriptor.
+* @param username: A pointer to a string representing the username of the account.
+**/
+void Login(int sockfd, char* username) {
     char buffer[1024];
     sprintf(buffer, "USER %s", username);
     write(sockfd, buffer, strlen(buffer));
     memset(buffer, 0, sizeof(buffer));
     read(sockfd, buffer, sizeof(buffer));
-    if (strcmp(buffer, "110") == 0) {
-        isLoggedIn = 1;
-        printf("Logged in successfully.\n");
+    if (strcmp(buffer, "100") == 0) {
+        checkLogin = 1;
+        printf("Login successful.\n");
     } else if (strcmp(buffer, "211") == 0) {
         printf("Account is locked.\n");
     } else if (strcmp(buffer, "212") == 0) {
-        printf("Account does not exist.\n");
+        printf("Account not exist.\n");
     } else {
-        printf("Unknown response from server.\n");
+        printf("Not response from server.\n");
     }
 }
 
-void handleLogout(int sockfd) {
-    char buffer[1024];
-    sprintf(buffer, "BYE");
-    write(sockfd, buffer, strlen(buffer));
-    memset(buffer, 0, sizeof(buffer));
-    read(sockfd, buffer, sizeof(buffer));
-    if (strcmp(buffer, "130") == 0) {
-        isLoggedIn = 0;
-        printf("Logged out successfully.\n");
-    } else if (strcmp(buffer, "221") == 0) {
-        printf("You are not logged in.\n");
-    } else {
-        printf("Unknown response from server.\n");
-    }
-}
-
-void handlePost(int sockfd) {
+/**
+* @function Post: This function posts a message if a user is logged in.
+* @param sockfd: The socket file descriptor.
+**/
+void Post(int sockfd) {
     char buffer[1024];
     printf("Enter your message: ");
     fgets(buffer, sizeof(buffer), stdin);
     buffer[strcspn(buffer, "\n")] = 0;
-char postBuffer[1024 + 5]; // Increase the size of postBuffer
-snprintf(postBuffer, sizeof(postBuffer), "POST %s", buffer);
 
-
-    write(sockfd, postBuffer, strlen(postBuffer));
+    write(sockfd, buffer, strlen(buffer));
     memset(buffer, 0, sizeof(buffer));
     read(sockfd, buffer, sizeof(buffer));
     if (strcmp(buffer, "120") == 0) {
-        printf("Message posted successfully.\n");
+        printf("Message posted successful.\n");
     } else if (strcmp(buffer, "221") == 0) {
         printf("You need to log in first.\n");
     } else {
@@ -68,7 +62,32 @@ snprintf(postBuffer, sizeof(postBuffer), "POST %s", buffer);
     }
 }
 
-void handleMenu(int sockfd) {
+/**
+* @function Logout: This function logs out the current user.
+* @param sockfd: The socket file descriptor.
+**/
+void Logout(int sockfd) {
+    char buffer[1024];
+    sprintf(buffer, "BYE");
+    write(sockfd, buffer, strlen(buffer));
+    memset(buffer, 0, sizeof(buffer));
+    read(sockfd, buffer, sizeof(buffer));
+
+    if (strcmp(buffer, "130") == 0) {
+        checkLogin = 0;
+        printf("Log out successful.\n");
+    } else if (strcmp(buffer, "221") == 0) {
+        printf("You are not logged in.\n");
+    } else {
+        printf("Unknown response from server.\n");
+    }
+}
+
+/**
+* @function Menu: This function displays a menu for the user to interact with.
+* @param sockfd: The socket file descriptor.
+**/
+void Menu(int sockfd) {
     while (1) {
         printf("1. Log in\n");
         printf("2. Post message\n");
@@ -77,43 +96,55 @@ void handleMenu(int sockfd) {
         printf("Enter your choice: ");
         int choice;
         scanf("%d", &choice);
-        getchar(); // consume newline character
+        getchar(); 
+
         switch (choice) {
             case 1:
-                if (isLoggedIn) {
+                if (checkLogin) {
                     printf("You are already logged in.\n");
                 } else {
                     char username[MAX_USERNAME_LEN];
                     printf("Enter your username: ");
                     fgets(username, sizeof(username), stdin);
                     username[strcspn(username, "\n")] = 0;
-                    handleLogin(sockfd, username);
+                    Login(sockfd, username);
                 }
                 break;
+
             case 2:
-                if (!isLoggedIn) {
+                if (!checkLogin) {
                     printf("You need to log in first.\n");
                 } else {
-                    handlePost(sockfd);
+                    Post(sockfd);
                 }
                 break;
+
             case 3:
-                if (!isLoggedIn) {
+                if (!checkLogin) {
                     printf("You are not logged in.\n");
                 } else {
-                    handleLogout(sockfd);
+                    Logout(sockfd);
                 }
                 break;
+                
             case 4:
                 return;
             default:
-                printf("Invalid choice. Please try again.\n");
+                printf("Try again.\n");
                 break;
         }
     }
 }
 
-int main(int argc, char *argv[]) {
+/**
+* @function main: This is the main function of the program.
+* @param argc: The number of command-line arguments.
+* @param argv: An array of pointers to the command-line arguments.
+* @return: Returns 0 if the program runs successfully, and 1 if there is an error.
+**/
+int main(int argc, char* argv[]) {
+
+    //Step 1: Check if the server IP address and port number
     if (argc < 3) {
         printf("Please provide the server IP address and port number.\n");
         return 1;
@@ -122,12 +153,13 @@ int main(int argc, char *argv[]) {
     int sockfd;
     struct sockaddr_in servaddr;
 
+    //Step 2: Create a socket using the AF_INET (IPv4)
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
         printf("Socket creation failed.\n");
         exit(0);
     } else {
-        printf("Socket successfully created.\n");
+        printf("Socket successful created.\n");
     }
 
     bzero(&servaddr, sizeof(servaddr));
@@ -136,18 +168,21 @@ int main(int argc, char *argv[]) {
     servaddr.sin_addr.s_addr = inet_addr(argv[1]);
     servaddr.sin_port = htons(atoi(argv[2]));
 
+    //Step 3: Connect the socket to the server address.
     if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) != 0) {
         printf("Connection to the server failed.\n");
         exit(0);
     } else {
-                printf("Connected to the server.\n");
+        printf("Connected to the server.\n");
     }
 
     char buffer[1024];
     memset(buffer, 0, sizeof(buffer));
     read(sockfd, buffer, sizeof(buffer));
+
+    //Step 4: Read the response from the server.
     if (strcmp(buffer, "100") == 0) {
-        handleMenu(sockfd);
+        Menu(sockfd);
     } else {
         printf("Unknown response from server.\n");
     }
@@ -156,3 +191,4 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
