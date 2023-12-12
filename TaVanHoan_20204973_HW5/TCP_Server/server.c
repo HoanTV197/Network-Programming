@@ -18,12 +18,6 @@ typedef struct {
 Account currentUser;
 int checkLogin = 0;
 
-/**
-* @function findAccount: This function finds an account with a given username in the "account.txt" file.
-* @param username: A pointer to a string representing the username of the account.
-* @return: If the account is found, it returns the account. If not found or an error occurs,
- it returns an Account with username as an empty string and status as -1.
-**/
 Account findAccount(char* username) {
     FILE* f = fopen("account.txt", "r+");
     if (f == NULL) {
@@ -49,11 +43,6 @@ Account findAccount(char* username) {
 }
 
 
-/**
-* @function Login: This function logs in a user with a given username.
-* @param connfd: The connection file descriptor.
-* @param username: A pointer to a string representing the username of the account.
-**/
 void Login(int connfd, char* username) {
     Account a = findAccount(username);
     if (strcmp(a.username, "") == 0) {
@@ -71,11 +60,6 @@ void Login(int connfd, char* username) {
 }
 
 
-/**
-* @function Post: This function posts an article if a user is logged in.
-* @param connfd: The connection file descriptor.
-* @param article: A pointer to a string representing the article to post.
-**/
 void Post(int connfd, char* article) {
     if (!checkLogin) {
         write(connfd, "221", 4);
@@ -87,10 +71,6 @@ void Post(int connfd, char* article) {
 }
 
 
-/**
-* @function Logout: This function logs out the current user.
-* @param connfd: The connection file descriptor.
-**/
 void Logout(int connfd) {
     if (!checkLogin) {
         write(connfd, "221", 4);
@@ -103,10 +83,6 @@ void Logout(int connfd) {
 }
 
 
-/**
-* @function Request: This function processes a request from a user.
-* @param connfd: The connection file descriptor.
-**/
 void Request(int connfd) {
     char buffer[1024];
     memset(buffer, 0, sizeof(buffer));
@@ -133,7 +109,7 @@ void Request(int connfd) {
    
     } else if (strcmp(command, "POST") == 0) {
         char article[50];
-        if (sscanf(rest, "%[^\n]", article) != 1) {
+        if (sscanf(rest, "%s", article) != 1) {
             write(connfd, "300", 4);
             printf("300\n");
             return;
@@ -151,10 +127,6 @@ void Request(int connfd) {
 }
 
 
-/**
-* @function Connection: This function handles a connection from a user.
-* @param connfd: The connection file descriptor.
-**/
 void Connection(int connfd) {
     write(connfd, "100", 4);
     while (1) {
@@ -166,12 +138,6 @@ void Connection(int connfd) {
 }
 
 
-/**
-* @function main: This is the main function of the program.
-* @param argc: The number of command-line arguments.
-* @param argv: An array of pointers to the command-line arguments.
-* @return: Returns 0 if the program runs successfully, and 1 if there is an error.
-**/
 int main(int argc, char* argv[]) {
 
     // Step 1: Check if the port number is provided as a command-line argument.

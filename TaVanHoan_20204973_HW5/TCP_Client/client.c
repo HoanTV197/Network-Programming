@@ -17,11 +17,6 @@ typedef struct {
 
 int checkLogin = 0;
 
-/**
-* @function Login: This function logs in a user with a given username.
-* @param sockfd: The socket file descriptor.
-* @param username: A pointer to a string representing the username of the account.
-**/
 void Login(int sockfd, char* username) {
     char buffer[1024];
     sprintf(buffer, "USER %s", username);
@@ -40,10 +35,6 @@ void Login(int sockfd, char* username) {
     }
 }
 
-/**
-* @function Post: This function posts a message if a user is logged in.
-* @param sockfd: The socket file descriptor.
-**/
 void Post(int sockfd) {
     char buffer[1024];
     printf("Enter your message: ");
@@ -62,10 +53,6 @@ void Post(int sockfd) {
     }
 }
 
-/**
-* @function Logout: This function logs out the current user.
-* @param sockfd: The socket file descriptor.
-**/
 void Logout(int sockfd) {
     char buffer[1024];
     sprintf(buffer, "BYE");
@@ -83,10 +70,6 @@ void Logout(int sockfd) {
     }
 }
 
-/**
-* @function Menu: This function displays a menu for the user to interact with.
-* @param sockfd: The socket file descriptor.
-**/
 void Menu(int sockfd) {
     while (1) {
         printf("1. Log in\n");
@@ -136,12 +119,7 @@ void Menu(int sockfd) {
     }
 }
 
-/**
-* @function main: This is the main function of the program.
-* @param argc: The number of command-line arguments.
-* @param argv: An array of pointers to the command-line arguments.
-* @return: Returns 0 if the program runs successfully, and 1 if there is an error.
-**/
+
 int main(int argc, char* argv[]) {
 
     //Step 1: Check if the server IP address and port number
